@@ -54,7 +54,6 @@ blockchain-scholarship-system/
 | Role | Description | Permissions |
 |------|-------------|-------------|
 | **Admin** | College Financial Aid Office | Announce scholarships, approve/reject applications, disburse funds, register users |
-| **Verifier** | Faculty / Committee Member | Review applications, assign merit scores (0–100), reject ineligible applications |
 | **Student** | Applicant | Browse scholarships, submit applications with CGPA and document hashes, receive funds |
 
 ---
@@ -62,23 +61,23 @@ blockchain-scholarship-system/
 ## 🔄 Scholarship Workflow
 
 ```
-Admin                Student              Verifier
-  │                     │                    │
-  │── announceScholarship ──────────────────►│
-  │   (ETH locked on-chain)                  │
-  │                     │                    │
-  │                     │── applyForScholarship
-  │                     │   (CGPA + doc hash)│
-  │                     │                    │
-  │                     │                    │── reviewApplication
-  │                     │                    │   (score 0-100 + remarks)
-  │                     │                    │
-  │── approveApplication ───────────────────►│
-  │   (or rejectApplication)                 │
-  │                     │                    │
-  │── disburseFunds ────►│                   │
-  │   (ETH sent to student wallet)           │
-  │                     │                    │
+Admin                         Student
+  │                              │
+  │── announceScholarship         │
+  │   (ETH locked on-chain)       │
+  │                              │
+  │                              │── applyForScholarship
+  │                              │   (CGPA + doc hash)
+  │                              │
+  │── reviewApplication           │
+  │   (score + remarks)           │
+  │                              │
+  │── approveApplication          │
+  │   (or rejectApplication)      │
+  │                              │
+  │── disburseFunds ────────────► │
+  │   (ETH sent to student wallet)│
+  │                              │
 ```
 
 ---
@@ -88,7 +87,7 @@ Admin                Student              Verifier
 ### Enumerations
 - **ScholarshipStatus:** `Active → Closed → Completed | Cancelled`
 - **ApplicationStatus:** `Submitted → UnderReview → Approved → Disbursed | Rejected`
-- **UserRole:** `None | Admin | Student | Verifier`
+- **UserRole:** `None | Admin | Student`
 
 ### Key Functions
 
@@ -97,12 +96,12 @@ Admin                Student              Verifier
 | `announceScholarship(...)` | Admin | Post scholarship + lock ETH on-chain |
 | `closeScholarship(id)` | Admin | Stop accepting new applications |
 | `cancelScholarship(id)` | Admin | Cancel + refund unused ETH |
-| `selfRegister(...)` | Student/Verifier | Register wallet on blockchain |
-| `registerUserByAdmin(...)` | Admin | Register any user with any role |
+| `selfRegister(...)` | Student | Register wallet on blockchain |
+| `registerUserByAdmin(...)` | Admin | Register users |
 | `applyForScholarship(...)` | Student | Submit application with document hash |
-| `reviewApplication(...)` | Verifier/Admin | Assign eligibility score + remarks |
+| `reviewApplication(...)` | Admin | Assign eligibility score + remarks |
 | `approveApplication(id)` | Admin | Approve application |
-| `rejectApplication(id, reason)` | Admin/Verifier | Reject with on-chain reason |
+| `rejectApplication(id, reason)` | Admin | Reject with on-chain reason |
 | `disburseFunds(id)` | Admin | Send ETH directly to student wallet |
 
 ### Events (Audit Trail)
@@ -210,7 +209,7 @@ Starts the node, deploys the contract, and launches the frontend in one command.
 | Recipient cap | `recipientCount < maxRecipients` enforced in smart contract |
 | Fund safety | Total fund locked at announcement; only disbursed to approved students |
 | Reentrancy safety | State updated before ETH transfer (checks-effects-interactions) |
-| Role access | `onlyAdmin`, `onlyStudent`, `onlyAdminOrVerifier` modifiers |
+| Role access | `onlyAdmin`, `onlyUser` modifiers |
 | Immutable records | All events emit on-chain with timestamps |
 
 ---
